@@ -20,6 +20,13 @@ gulp.task('sass', function () {
     .pipe(gulp.dest('./demo/dist/css'));
 });
 
+var clean = require('gulp-clean');
+
+gulp.task('clean', function () {
+  return gulp.src('./demo/dist', {read: false})
+    .pipe(clean({force: true}));
+});
+
 gulp.task('watch', function(){
   gulp.watch('demo/src/sass/**/*.{sass,scss}', ['sass']);
 });
