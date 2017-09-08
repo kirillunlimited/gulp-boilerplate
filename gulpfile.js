@@ -41,7 +41,28 @@ gulp.task('js', function() {
     .pipe(sourcemaps.init({loadMaps: true}))
     .pipe(uglify())
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('./demo/dist/js'))
+    .pipe(gulp.dest('./demo/dist/js'));
+});
+
+var browserSync = require('browser-sync').create();
+
+gulp.task('serve', ['default'], function() {
+  browserSync.init({
+    server: {
+      baseDir: "./demo"
+    }
+  });
+  gulp.watch('./demo/dist/**').on('change', browserSync.reload);
+});
+
+gulp.task('serve:proxy', ['default'], function() {
+  browserSync.init({
+    startPath: "/demo",
+    proxy: {
+      target: "domain"
+    }
+  });
+  gulp.watch('./dist/**').on('change', browserSync.reload);
 });
 
 var clean = require('gulp-clean');
