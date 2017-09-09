@@ -1,15 +1,37 @@
-'use strict';
 
-var gulp = require('gulp');
-var gutil = require('gulp-util');
+const gulp = require('gulp');
+const gutil = require('gulp-util');
+const sourcemaps = require('gulp-sourcemaps');
 
-var sass = require('gulp-sass');
-var csso = require('gulp-csso');
-var autoprefixer = require('gulp-autoprefixer');
-var sourcemaps = require('gulp-sourcemaps');
+const CONFIG = {
+  DEST: "./demo/dist",
+  SASS: {
+    SRC: "./demo/src/sass/**/*.{sass,scss}",
+    SRC_FILE: "./demo/src/sass/index.scss",
+    DEST: "./demo/dist/css",
+  },
+  JS: {
+    SRC: "./demo/src/js/**/*.js",
+    DEST: "./demo/dist/js",
+    DEST_FILE: "main.js"
+  },
+  IMAGES: {
+    SRC: "./demo/src/img/**/*.{jpg,png,svg,gif}",
+    DEST: "./demo/dist/img"
+  },
+  BROWSERSYNC: {
+    DEST: "./demo/dist/**",
+    BASE: "./demo",
+    DOMAIN: "domain"
+  }
+};
+
+const sass = require('gulp-sass');
+const csso = require('gulp-csso');
+const autoprefixer = require('gulp-autoprefixer');
 
 gulp.task('sass', function () {
-  return gulp.src('./demo/src/sass/index.scss')
+  return gulp.src(CONFIG.SASS.SRC_FILE)
     .pipe(sourcemaps.init())
     .pipe(sass().on('error', sass.logError))
     .pipe(sourcemaps.write({includeContent: false}))
@@ -17,15 +39,15 @@ gulp.task('sass', function () {
     .pipe(autoprefixer())
     .pipe(csso())
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('./demo/dist/css'));
+    .pipe(gulp.dest(CONFIG.SASS.DEST));
 });
 
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var jsValidate = require('gulp-jsvalidate');
+const uglify = require('gulp-uglify');
+const concat = require('gulp-concat');
+const jsValidate = require('gulp-jsvalidate');
 
 gulp.task('js', function() {
-  return gulp.src('./demo/src/js/**/*.js')
+  return gulp.src(CONFIG.JS.SRC)
     .pipe(jsValidate())
     .on('error', function(error) {
       gutil.log(gutil.colors.red('Error') + ' in JavaScript');
@@ -36,22 +58,22 @@ gulp.task('js', function() {
       this.emit('end');
     })
     .pipe(sourcemaps.init())
-    .pipe(concat('main.js'))
+    .pipe(concat(CONFIG.JS.DEST_FILE))
     .pipe(sourcemaps.write({includeContent: false}))
     .pipe(sourcemaps.init({loadMaps: true}))
     .pipe(uglify())
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('./demo/dist/js'));
+    .pipe(gulp.dest(CONFIG.JS.DEST));
 });
 
-var imagemin = require('gulp-imagemin');
-var changed = require('gulp-changed');
-var imageminPngquant = require('imagemin-pngquant');
-var imageminJpegRecompress = require('imagemin-jpeg-recompress');
+const imagemin = require('gulp-imagemin');
+const changed = require('gulp-changed');
+const imageminPngquant = require('imagemin-pngquant');
+const imageminJpegRecompress = require('imagemin-jpeg-recompress');
 
 gulp.task('images', function() {
-  return gulp.src('./demo/src/img/**/*.{jpg,png,svg,gif}')
-    .pipe(changed('./demo/dist/img'))
+  return gulp.src(CONFIG.IMAGES.SRC)
+    .pipe(changed(CONFIG.IMAGES.DEST))
     .pipe(imagemin([
       imageminPngquant({quality: '50-75'}),
       imageminJpegRecompress({
@@ -63,41 +85,41 @@ gulp.task('images', function() {
       imagemin.gifsicle({interlaced: true}),
       imagemin.svgo({plugins: [{removeViewBox: true}]})
     ]))
-    .pipe(gulp.dest('./demo/dist/img'));
+    .pipe(gulp.dest(CONFIG.IMAGES.DEST));
 });
 
-var browserSync = require('browser-sync').create();
+const browserSync = require('browser-sync').create();
 
 gulp.task('serve', ['default'], function() {
   browserSync.init({
     server: {
-      baseDir: "./demo"
+      baseDir: CONFIG.BROWSERSYNC.BASE
     }
   });
-  gulp.watch('./demo/dist/**').on('change', browserSync.reload);
+  gulp.watch(CONFIG.BROWSERSYNC.DEST).on('change', browserSync.reload);
 });
 
 gulp.task('serve:proxy', ['default'], function() {
   browserSync.init({
-    startPath: "/demo",
+    startPath: CONFIG.BROWSERSYNC.BASE,
     proxy: {
-      target: "domain"
+      target: CONFIG.BROWSERSYNC.DOMAIN
     }
   });
-  gulp.watch('./demo/dist/**').on('change', browserSync.reload);
+  gulp.watch(CONFIG.BROWSERSYNC.DEST).on('change', browserSync.reload);
 });
 
-var clean = require('gulp-clean');
+const clean = require('gulp-clean');
 
 gulp.task('clean', function () {
-  return gulp.src('./demo/dist', {read: false})
+  return gulp.src(CONFIG.DEST, {read: false})
     .pipe(clean({force: true}));
 });
 
 gulp.task('watch', function(){
-  gulp.watch('demo/src/sass/**/*.{sass,scss}', ['sass']);
-  gulp.watch('demo/src/js/**/*.js', ['js']);
-  gulp.watch('demo/src/img/**/*.{jpg,png,svg,gif}', ['images']);
+  gulp.watch(CONFIG.SASS.SRC, ['sass']);
+  gulp.watch(CONFIG.JS.SRC, ['js']);
+  gulp.watch(CONFIG.IMAGES.SRC, ['images']);
 });
 
 gulp.task('build', ['sass', 'js', 'images']);
