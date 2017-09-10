@@ -7,24 +7,24 @@ const runSequence  = require('run-sequence');
 const CONFIG = {
   DEST: "./demo/dist",
   SASS: {
-    SRC: "./demo/src/sass/**/*.{sass,scss}",
-    SRC_FILE: "./demo/src/sass/index.scss",
+    SRC: "demo/src/sass/**/*.{sass,scss}",
+    SRC_FILE: "demo/src/sass/index.scss",
     DEST: "./demo/dist/css",
   },
   JS: {
-    SRC: "./demo/src/js/**/*.js",
+    SRC: "demo/src/js/**/*.js",
     DEST: "./demo/dist/js",
     DEST_FILE: "main.js"
   },
   IMAGES: {
     SRC: [
-      "./demo/src/img/**/*.{jpg,png,svg,gif}",
+      "demo/src/img/**/*.{jpg,png,svg,gif}",
       "!./demo/src/img/sprite/**"
     ],
     DEST: "./demo/dist/img"
   },
   SPRITE: {
-    SRC: "./demo/src/img/sprite/*",
+    SRC: "demo/src/img/sprite/*",
     DEST_IMG: "./demo/src/img",
     DEST_CSS: "./demo/src/sass/helpers",
     NAME: 'sprite.png',
