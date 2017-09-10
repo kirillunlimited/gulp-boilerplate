@@ -2,6 +2,7 @@
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const sourcemaps = require('gulp-sourcemaps');
+const runSequence  = require('run-sequence');
 
 const CONFIG = {
   DEST: "./demo/dist",
@@ -16,14 +17,25 @@ const CONFIG = {
     DEST_FILE: "main.js"
   },
   IMAGES: {
-    SRC: "./demo/src/img/**/*.{jpg,png,svg,gif}",
+    SRC: [
+      "./demo/src/img/**/*.{jpg,png,svg,gif}",
+      "!./demo/src/img/sprite/**"
+    ],
     DEST: "./demo/dist/img"
+  },
+  SPRITE: {
+    SRC: "./demo/src/img/sprite/*",
+    DEST_IMG: "./demo/src/img",
+    DEST_CSS: "./demo/src/sass/helpers",
+    NAME: 'sprite.png',
+    NAME_CSS: 'sprite.scss',
+    PATH: '../img/sprite.png'
   },
   BROWSERSYNC: {
     DEST: "./demo/dist/**",
     BASE: "./demo",
     DOMAIN: "domain"
-  }
+  },
 };
 
 const sass = require('gulp-sass');
@@ -88,6 +100,24 @@ gulp.task('images', function() {
     .pipe(gulp.dest(CONFIG.IMAGES.DEST));
 });
 
+const spritesmith = require('gulp.spritesmith');
+
+gulp.task('sprite', function() {
+  const spriteData = gulp.src(CONFIG.SPRITE.SRC).pipe(spritesmith({
+    imgName: CONFIG.SPRITE.NAME,
+    cssName: CONFIG.SPRITE.NAME_CSS,
+    imgPath: CONFIG.SPRITE.PATH
+  }));
+
+  spriteData.img
+    .pipe(gulp.dest(CONFIG.SPRITE.DEST_IMG));
+
+  spriteData.css
+    .pipe(gulp.dest(CONFIG.SPRITE.DEST_CSS))
+
+  return spriteData;
+});
+
 const browserSync = require('browser-sync').create();
 
 gulp.task('serve', ['default'], function() {
@@ -120,8 +150,11 @@ gulp.task('watch', function(){
   gulp.watch(CONFIG.SASS.SRC, ['sass']);
   gulp.watch(CONFIG.JS.SRC, ['js']);
   gulp.watch(CONFIG.IMAGES.SRC, ['images']);
+  gulp.watch(CONFIG.SPRITE.SRC, ['sprite']);
 });
 
-gulp.task('build', ['sass', 'js', 'images']);
+gulp.task('build', function() {
+  runSequence('sprite', 'sass', 'js', 'images');
+});
 
 gulp.task('default', ['build', 'watch']);

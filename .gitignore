@@ -1,2 +1,4 @@
 node_modules/
 demo/dist
+demo/src/img/sprite.png
+demo/src/sass/helpers/sprite.scss

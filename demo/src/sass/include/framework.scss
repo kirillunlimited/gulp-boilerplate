@@ -1,0 +1,18 @@
+.framework {
+  display: inline-block;
+  &_react {
+    @include sprite($react);
+  }
+  &_angular {
+    @include sprite($angular);
+  }
+  &_ember {
+    @include sprite($ember);
+  }
+  &_polymer {
+    @include sprite($polymer);
+  }
+  &_vue {
+    @include sprite($vue);
+  }
+}
