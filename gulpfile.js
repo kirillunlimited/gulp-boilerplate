@@ -4,7 +4,6 @@ const $ = require('gulp-load-plugins')({
 });
 
 const CONFIG = {
-  DEST: "./demo/dist",
   SASS: {
     SRC: "demo/src/sass/**/*.{sass,scss}",
     SRC_FILE: "demo/src/sass/index.scss",
@@ -26,33 +25,36 @@ const CONFIG = {
     SRC: "demo/src/img/sprite/*",
     DEST_IMG: "./demo/src/img",
     DEST_CSS: "./demo/src/sass/helpers",
-    NAME: 'sprite.png',
-    NAME_CSS: 'sprite.scss',
-    PATH: '../img/sprite.png'
+    NAME_SPRITE: "sprite.png",
+    NAME_CSS: "sprite.scss",
+    PATH: "../img/sprite.png"
   },
-  BROWSERSYNC: {
+  CLEAN: {
+    PATH: "./demo/dist"
+  },
+  SERVE: {
     DEST: "./demo/dist/**",
     BASE: "./demo",
     DOMAIN: "domain"
-  },
+  }
 };
 
 gulp.task('sass', function () {
   return gulp.src(CONFIG.SASS.SRC_FILE)
     .pipe($.sourcemaps.init())
     .pipe($.sass().on('error', $.sass.logError))
-    .pipe($.sourcemaps.write({includeContent: false}))
-    .pipe($.sourcemaps.init({loadMaps: true}))
+    .pipe($.sourcemaps.write({ includeContent: false }))
+    .pipe($.sourcemaps.init({ loadMaps: true }))
     .pipe($.autoprefixer())
     .pipe($.csso())
     .pipe($.sourcemaps.write())
     .pipe(gulp.dest(CONFIG.SASS.DEST));
 });
 
-gulp.task('js', function() {
+gulp.task('js', function () {
   return gulp.src(CONFIG.JS.SRC)
     .pipe($.jsvalidate())
-    .on('error', function(error) {
+    .on('error', function (error) {
       $.util.log($.util.colors.red('JavaScript error'));
       $.util.log('  ' + $.util.colors.yellow('Filename: ') + error.fileName);
       $.util.log('  ' + $.util.colors.yellow('Error:    ') + error.message);
@@ -60,33 +62,33 @@ gulp.task('js', function() {
     })
     .pipe($.sourcemaps.init())
     .pipe($.concat(CONFIG.JS.DEST_FILE))
-    .pipe($.sourcemaps.write({includeContent: false}))
-    .pipe($.sourcemaps.init({loadMaps: true}))
+    .pipe($.sourcemaps.write({ includeContent: false }))
+    .pipe($.sourcemaps.init({ loadMaps: true }))
     .pipe($.uglify())
     .pipe($.sourcemaps.write())
     .pipe(gulp.dest(CONFIG.JS.DEST));
 });
 
-gulp.task('images', function() {
+gulp.task('images', function () {
   return gulp.src(CONFIG.IMAGES.SRC)
     .pipe($.changed(CONFIG.IMAGES.DEST))
     .pipe($.imagemin([
-      $.imageminPngquant({quality: '50-75'}),
+      $.imageminPngquant({ quality: '50-75' }),
       $.imageminJpegRecompress({
         progressive: true,
         max: 75,
         min: 50,
         quality: 'medium'
       }),
-      $.imagemin.gifsicle({interlaced: true}),
-      $.imagemin.svgo({plugins: [{removeViewBox: true}]})
+      $.imagemin.gifsicle({ interlaced: true }),
+      $.imagemin.svgo({ plugins: [{ removeViewBox: true }] })
     ]))
     .pipe(gulp.dest(CONFIG.IMAGES.DEST));
 });
 
-gulp.task('sprite', function() {
+gulp.task('sprite', function () {
   const spriteData = gulp.src(CONFIG.SPRITE.SRC).pipe($.spritesmith({
-    imgName: CONFIG.SPRITE.NAME,
+    imgName: CONFIG.SPRITE.NAME_SPRITE,
     cssName: CONFIG.SPRITE.NAME_CSS,
     imgPath: CONFIG.SPRITE.PATH
   }));
@@ -100,41 +102,41 @@ gulp.task('sprite', function() {
   return spriteData;
 });
 
-gulp.task('serve', ['default'], function() {
+gulp.task('clean', function () {
+  return gulp.src(CONFIG.CLEAN.PATH, { read: false })
+    .pipe($.clean({ force: true }));
+});
+
+gulp.task('build', ['clean'], function () {
+  $.runSequence('sprite', 'sass', 'js', 'images');
+});
+
+gulp.task('serve', ['build'], function () {
   const browserSync = $.browserSync.create();
   browserSync.init({
     server: {
-      baseDir: CONFIG.BROWSERSYNC.BASE
+      baseDir: CONFIG.SERVE.BASE
     }
   });
-  gulp.watch(CONFIG.BROWSERSYNC.DEST).on('change', browserSync.reload);
+  gulp.watch(CONFIG.SERVE.DEST).on('change', browserSync.reload);
 });
 
-gulp.task('serve:proxy', ['default'], function() {
+gulp.task('serve:proxy', ['build'], function () {
   const browserSync = $.browserSync.create();
   browserSync.init({
-    startPath: CONFIG.BROWSERSYNC.BASE,
+    startPath: CONFIG.SERVE.BASE,
     proxy: {
-      target: CONFIG.BROWSERSYNC.DOMAIN
+      target: CONFIG.SERVE.DOMAIN
     }
   });
-  gulp.watch(CONFIG.BROWSERSYNC.DEST).on('change', browserSync.reload);
+  gulp.watch(CONFIG.SERVE.DEST).on('change', browserSync.reload);
 });
 
-gulp.task('clean', function () {
-  return gulp.src(CONFIG.DEST, {read: false})
-    .pipe($.clean({force: true}));
-});
-
-gulp.task('watch', function(){
+gulp.task('watch', ['build'], function () {
   gulp.watch(CONFIG.SASS.SRC, ['sass']);
   gulp.watch(CONFIG.JS.SRC, ['js']);
   gulp.watch(CONFIG.IMAGES.SRC, ['images']);
   gulp.watch(CONFIG.SPRITE.SRC, ['sprite']);
 });
 
-gulp.task('build', function() {
-  $.runSequence('sprite', 'sass', 'js', 'images');
-});
-
-gulp.task('default', ['build', 'watch']);
+gulp.task('default', ['watch']);
